@@ -1,0 +1,13 @@
+{
+  "name": "node-web-scrape",
+  "version": "0.0.1",
+  "description": "Scrape le web.",
+  "main": "server.js",
+  "author": "Scotch",
+  "dependencies": {
+    "cheerio": "latest",
+    "express": "latest",
+    "request": "latest",
+    "spotify-web-api-node": "^2.0.2"
+  }
+}

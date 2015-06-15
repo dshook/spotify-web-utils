@@ -1,0 +1,33 @@
+{
+  "parser": "babel-eslint",
+  "rules": {
+    "strict": 0,
+    //for forms.CharField, exceptions don't seem to work atm
+    "new-cap": false,
+    "no-multi-spaces": false,
+    "key-spacing": false,
+    "no-mixed-spaces-and-tabs": false,
+    "handle-callback-err": false,
+    "no-console": false,
+    "no-trailing-spaces": false,
+    "no-underscore-dangle": false,
+    "no-use-before-define": "nofunc",
+    "curly": [2, "multi-line"],
+    "quotes": "single",
+
+  },
+  "ecmaFeatures": {
+    "jsx": true,
+    "modules": true,
+    "module":  true
+  },
+  "env": {
+    "browser": true,
+    "node": true,
+    "es6": true
+  },
+  "globals": {
+    "promise": true,
+    "it": true
+  }
+}
