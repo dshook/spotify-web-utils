@@ -7,6 +7,7 @@ var app     = express();
 var SpotifyWebApi = require('spotify-web-api-node');
 
 var port = '8081';
+var url = 'http://www.quuit.com/quu/playlist/177';
 var clientId = '37dac1af51a649edb145a563eaa4d02a';
 var clientSecret = '0ca26311c6334afb90f854833a79c754';
 var redirectUrl = 'http://localhost:' + port + '/auth';
@@ -14,24 +15,22 @@ var playlistName = 'Old School';
 var songs = [];
 
 app.get('/scrape', function(req, res){
-	// Let's scrape Anchorman 2
-	var url = 'http://www.quuit.com/quu/playlist/177';
 
-	request(url, function(error, response, html){
-		if(!error){
-			var $ = cheerio.load(html);
-			songs = [];
+  request(url, function(error, response, html){
+    if(!error){
+      var $ = cheerio.load(html);
+      songs = [];
 
-			$('ul#ulPlaylist>li').each(function(){
-		        var data = $(this);
-		        songs.push({
-			        title: data.find('a.playlist-music').first().text(),
-			        artist: data.find('.music-desc label').first().text()
-		        });
-	        });
-		}
+      $('ul#ulPlaylist>li').each(function(){
+            var data = $(this);
+            songs.push({
+              title: data.find('a.playlist-music').first().text(),
+              artist: data.find('.music-desc label').first().text()
+            });
+          });
+    }
 
-	  console.log("Fetched " + songs.length + " songs");
+    console.log("Fetched " + songs.length + " songs");
 
     // requests authorization
     var scope = 'user-read-private playlist-read-private playlist-modify-private playlist-modify-public';
@@ -45,7 +44,7 @@ app.get('/scrape', function(req, res){
       }));
 
 
-	});
+  });
 });
 
 app.get('/auth', function(req, res){
