@@ -22,12 +22,12 @@ app.get('/scrape', function(req, res){
       songs = [];
 
       $('ul#ulPlaylist>li').each(function(){
-            var data = $(this);
-            songs.push({
-              title: data.find('a.playlist-music').first().text(),
-              artist: data.find('.music-desc label').first().text()
-            });
-          });
+        var data = $(this);
+        songs.push({
+          title: data.find('a.playlist-music').first().text(),
+          artist: data.find('.music-desc label').first().text()
+        });
+      });
     }
 
     console.log("Fetched " + songs.length + " songs");
@@ -42,8 +42,6 @@ app.get('/scrape', function(req, res){
         redirect_uri: redirectUrl,
         state: 'lolol'
       }));
-
-
   });
 });
 
@@ -147,7 +145,6 @@ app.get('/auth', function(req, res){
   });
 
 });
-
 
 app.listen(port);
 console.log('Magic happens on port ' + port);
