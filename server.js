@@ -1,15 +1,18 @@
-var express = require('express');
-var request = require('request');
-var cheerio = require('cheerio');
-var querystring = require('querystring');
-var cookieParser = require('cookie-parser');
-var app     = express();
+var express       = require('express');
+var dotenv        = require('dotenv');
+var request       = require('request');
+var cheerio       = require('cheerio');
+var querystring   = require('querystring');
+var cookieParser  = require('cookie-parser');
 var SpotifyWebApi = require('spotify-web-api-node');
+var app           = express();
 
-var port = '8081';
+dotenv.load();
+
+var port = process.env.PORT || '8081';
 var url = 'http://www.quuit.com/quu/playlist/177';
-var clientId = '37dac1af51a649edb145a563eaa4d02a';
-var clientSecret = '0ca26311c6334afb90f854833a79c754';
+var clientId = process.env.CLIENT_ID;
+var clientSecret = process.env.CLIENT_SECRET;
 var redirectUrl = 'http://localhost:' + port + '/auth';
 var playlistName = 'Old School';
 var songs = [];
@@ -103,8 +106,8 @@ app.get('/auth', async function(req, res){
     for(let song of songs){
       try{
         var searchResult = await spotifyApi.searchTracks(song.title + ' ' + song.artist);
-        console.log('search for ' + song.title + ' ' + song.artist, 
-          searchResult.body.tracks.items.slice(0, 5).map(songSelect));
+        // console.log('search for ' + song.title + ' ' + song.artist, 
+        //   searchResult.body.tracks.items.slice(0, 5).map(songSelect));
         if(searchResult.body.tracks.items.length > 0){
           spotifySongs.push(searchResult.body.tracks.items[0]);
         }
