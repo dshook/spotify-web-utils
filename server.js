@@ -1,6 +1,8 @@
 var express       = require('express');
 var dotenv        = require('dotenv');
+var Promise       = require('bluebird');
 var request       = require('request');
+var requestAsync  = Promise.promisify(request);
 var cheerio       = require('cheerio');
 var querystring   = require('querystring');
 var cookieParser  = require('cookie-parser');
@@ -13,7 +15,6 @@ var port = process.env.PORT || '8081';
 var url = 'http://www.quuit.com/quu/playlist/177';
 var clientId = process.env.CLIENT_ID;
 var clientSecret = process.env.CLIENT_SECRET;
-var redirectUrl = 'http://localhost:' + port + '/auth';
 var playlistName = 'Old School';
 var songs = [];
 
@@ -24,11 +25,70 @@ function songSelect(s){ return {
   }; 
 }
 
-app.get('/scrape', function(req, res){
+//remember to add redirect uri to 
+//https://developer.spotify.com/my-applications
+function getRedirectUrl(currentPath){
+  return 'http://localhost:' + port + currentPath;
+}
 
-  request(url, function(error, response, html){
-    if(!error){
-      var $ = cheerio.load(html);
+async function getSpotifyApi(code, currentPath){
+
+  var spotifyApi = new SpotifyWebApi({
+    clientId: clientId,
+    clientSecret: clientSecret,
+    redirectUri: getRedirectUrl(currentPath)
+  });
+
+  var authData = await spotifyApi.authorizationCodeGrant(code);
+
+  console.log('The token expires in ' + authData.body['expires_in']);
+  console.log('The access token is ' + authData.body['access_token']);
+  console.log('The refresh token is ' + authData.body['refresh_token']);
+
+  // Set the access token on the API object to use it in later calls
+  spotifyApi.setAccessToken(authData.body['access_token']);
+  spotifyApi.setRefreshToken(authData.body['refresh_token']);
+
+  return spotifyApi;
+}
+
+
+app.get('/auth', async function(req, res){
+
+  var returnUrl = req.query.returnUrl;
+
+  // requests authorization
+  var scope = 'user-read-private playlist-read-private playlist-modify-private playlist-modify-public';
+  res.redirect('https://accounts.spotify.com/authorize?' +
+    querystring.stringify({
+      response_type: 'code',
+      client_id: clientId,
+      scope: scope,
+      redirect_uri: getRedirectUrl(returnUrl),
+      state: 'lolol'
+    }));
+});
+
+app.get('/scrape', async function(req, res){
+
+  var code = req.query.code || null;
+  var currentPath = '/scrape';
+
+  if(!code){
+    console.log('Redirecting to Auth'); 
+    res.redirect('/auth?' + querystring.stringify({returnUrl: currentPath}));
+    return;
+  }
+
+  console.log('auth');
+
+  try{
+    console.log('current path ', currentPath);
+    var spotifyApi = await getSpotifyApi(code, currentPath);
+
+    try{
+      var scrapeResponse = await requestAsync(url);
+      var $ = cheerio.load(scrapeResponse[1]);
       songs = [];
 
       $('ul#ulPlaylist>li').each(function(){
@@ -38,46 +98,11 @@ app.get('/scrape', function(req, res){
           artist: data.find('.music-desc label').first().text().trim().replace('...', '')
         });
       });
+    }catch(e){
+      console.log('Error Fetching url ', e);
     }
 
-    console.log('Fetched ' + songs.length + ' songs');
-
-    // requests authorization
-    var scope = 'user-read-private playlist-read-private playlist-modify-private playlist-modify-public';
-    res.redirect('https://accounts.spotify.com/authorize?' +
-      querystring.stringify({
-        response_type: 'code',
-        client_id: clientId,
-        scope: scope,
-        redirect_uri: redirectUrl,
-        state: 'lolol'
-      }));
-  });
-});
-
-app.get('/auth', async function(req, res){
-
-  var code = req.query.code || null;
-  var state = req.query.state || null;
-
-  console.log('auth');
-
-  var spotifyApi = new SpotifyWebApi({
-    clientId: clientId,
-    clientSecret: clientSecret,
-    redirectUri: redirectUrl
-  });
-
-  try{
-    var authData = await spotifyApi.authorizationCodeGrant(code);
-
-    console.log('The token expires in ' + authData.body['expires_in']);
-    console.log('The access token is ' + authData.body['access_token']);
-    console.log('The refresh token is ' + authData.body['refresh_token']);
-
-    // Set the access token on the API object to use it in later calls
-    spotifyApi.setAccessToken(authData.body['access_token']);
-    spotifyApi.setRefreshToken(authData.body['refresh_token']);
+  console.log('Fetched ' + songs.length + ' songs');
 
     var userData = await spotifyApi.getMe();
     var user = userData.body;
