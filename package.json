@@ -15,6 +15,7 @@
     "dotenv": "^1.1.0",
     "express": "latest",
     "express-session": "^1.11.3",
+    "lodash": "^3.9.3",
     "querystring": "^0.2.0",
     "request": "latest",
     "spotify-web-api-node": "^2.0.2"

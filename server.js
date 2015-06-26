@@ -7,16 +7,15 @@ var cheerio       = require('cheerio');
 var querystring   = require('querystring');
 var cookieParser  = require('cookie-parser');
 var SpotifyWebApi = require('spotify-web-api-node');
+var SpotifyUtils  = require('./spotify-utils.js');
+var _             = require('lodash');
 var app           = express();
 
 dotenv.load();
 
 var port = process.env.PORT || '8081';
-var url = 'http://www.quuit.com/quu/playlist/177';
 var clientId = process.env.CLIENT_ID;
 var clientSecret = process.env.CLIENT_SECRET;
-var playlistName = 'Old School';
-var songs = [];
 
 function songSelect(s){ return {
     name : s.name,
@@ -71,6 +70,8 @@ app.get('/auth', async function(req, res){
 
 app.get('/scrape', async function(req, res){
 
+  var url = 'http://www.quuit.com/quu/playlist/177';
+  var playlistName = 'Old School';
   var code = req.query.code || null;
   var currentPath = '/scrape';
 
@@ -83,9 +84,10 @@ app.get('/scrape', async function(req, res){
   console.log('auth');
 
   try{
-    console.log('current path ', currentPath);
     var spotifyApi = await getSpotifyApi(code, currentPath);
+    var spotifyUtils = new SpotifyUtils(spotifyApi);
 
+    var songs = [];
     try{
       var scrapeResponse = await requestAsync(url);
       var $ = cheerio.load(scrapeResponse[1]);
@@ -102,7 +104,7 @@ app.get('/scrape', async function(req, res){
       console.log('Error Fetching url ', e);
     }
 
-  console.log('Fetched ' + songs.length + ' songs');
+    console.log('Fetched ' + songs.length + ' songs');
 
     var userData = await spotifyApi.getMe();
     var user = userData.body;
@@ -137,35 +139,19 @@ app.get('/scrape', async function(req, res){
           spotifySongs.push(searchResult.body.tracks.items[0]);
         }
       }catch (songError){
-        console.log('Error finding song');
-        console.log(songError);
+        console.log('Error finding song', songError);
       }
     }
 
     //find songs already in playlist to dedupe
-    var playlistSongIds = [];
-    var offset = 0;
-    var limit = 100;
-    var tracksFetched = 0;
-    do{
-      var playlistTrackData = await spotifyApi.getPlaylistTracks(user.id, playlist.id, 
-        { 'offset' : offset, 'limit' : limit, 'fields' : 'items(track(id))' });
-      console.log('playlist tracks');
-
-      tracksFetched = playlistTrackData.body.items.length;
-      offset += tracksFetched;
-      playlistSongIds = playlistSongIds.concat(
-        playlistTrackData.body.items.map(s => s.track.id)
-      );
-
-    }while(tracksFetched === limit);
+    var playlistSongs = await spotifyUtils.fetchPlaylistSongs(user.id, playlist.id);
 
     console.log('Fetched existing tracks');
 
     var actualNewSongs = [];
     //find new tracks
     for(let potentialNewSong of spotifySongs){
-      if(playlistSongIds.indexOf(potentialNewSong.id) === -1){
+      if(!_.any(playlistSongs, s => s.track.id === potentialNewSong.id) ){
         actualNewSongs.push(potentialNewSong);
       }
     }
