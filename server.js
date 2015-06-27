@@ -24,6 +24,12 @@ function songSelect(s){ return {
   }; 
 }
 
+console.write = function(text, data){
+  process.stdout.clearLine();  // clear current text
+  process.stdout.cursorTo(0);  // move cursor to beginning of line 
+  process.stdout.write(text);
+};
+
 //remember to add redirect uri to 
 //https://developer.spotify.com/my-applications
 function getRedirectUrl(currentPath){
@@ -156,13 +162,13 @@ app.get('/scrape', async function(req, res){
       }
     }
 
-    var trackLookups = actualNewSongs
+    var trackIds = actualNewSongs
       .filter(function(m){ return m && m.id; })
       .map(function(m){
-        return 'spotify:track:' + m.id;
+        return m.id;
       });
 
-    var playlistAdd = spotifyApi.addTracksToPlaylist(user.id, playlist.id, trackLookups);
+    var playlistAdd = await spotifyUtils.addPlaylistSongs(user.id, playlist.id, trackIds);
 
     console.log('playlist songs added');
     res.json({
@@ -176,6 +182,108 @@ app.get('/scrape', async function(req, res){
     res.write('Something went wrong!' + JSON.stringify(err));
     res.end();
   }
+
+});
+
+app.get('/coverify', async function(req, res){
+
+  var playlistName = 'play';
+  var code = req.query.code || null;
+  var currentPath = '/coverify';
+
+  if(!code){
+    console.log('Redirecting to Auth'); 
+    res.redirect('/auth?' + querystring.stringify({returnUrl: currentPath}));
+    return;
+  }
+
+  console.log('auth');
+
+  try{
+    var spotifyApi = await getSpotifyApi(code, currentPath);
+    var spotifyUtils = new SpotifyUtils(spotifyApi);
+
+    var userData = await spotifyApi.getMe();
+    var user = userData.body;
+
+    var playlistData = await spotifyApi.getUserPlaylists(user.id);
+    console.log('fetched playlists');
+    var playlist = null;
+
+    if(playlistData.body.items.length > 0){
+      for (var i = playlistData.body.items.length - 1; i >= 0; i--) {
+        var p = playlistData.body.items[i];
+        if(p.name === playlistName){
+          playlist = p;
+        }
+      }
+    }
+
+    if(!playlist){
+      res.write('Could not find playlist');
+      return;
+    }
+
+    //find songs already in playlist to dedupe
+    var playlistSongs = await spotifyUtils.fetchPlaylistSongs(user.id, playlist.id);
+
+    //lookup cover songs
+    var coverSongs = [];
+    var coverI = 0;
+    for(let song of playlistSongs){
+      try{
+        var searchResult = await spotifyApi.searchTracks(song.track.name);
+
+        console.write('Searched for song ' + coverI++);
+
+        // console.log('search for ' + song.title + ' ' + song.artist, 
+        //   searchResult.body.tracks.items.slice(0, 5).map(songSelect));
+        var filteredSongs = _.filter(searchResult.body.tracks.items,
+            track => track.artists[0].name !== song.track.artists[0].name 
+              && track.name === song.track.name
+          );
+        if(filteredSongs.length > 0){
+          coverSongs = coverSongs.concat(filteredSongs);
+        }
+      }catch (songError){
+        console.log('Error finding song', songError);
+      }
+    }
+
+    if(coverSongs.length === 0){
+      res.json({coverSongs: 'No cover songs found'});
+      return;
+    }
+
+    console.log('Found ' + coverSongs.length + ' Cover Songs');
+
+    var newPlaylistName = playlistName + ' covers';
+    //create playlist if we couldn't find it
+    var playlistResult = await spotifyApi.createPlaylist(user.id, newPlaylistName, { 'public' : false });
+    var newPlaylist = playlistResult.body;
+
+    console.log('Created new playlist');
+
+
+    var trackIds = coverSongs
+      .filter(function(m){ return m && m.id; })
+      .map(function(m){
+        return m.id;
+      });
+
+    var playlistAdd = await spotifyUtils.addPlaylistSongs(user.id, newPlaylist.id, trackIds);
+
+    console.log('cover songs added');
+    res.json({
+      coverSongs: coverSongs.map(songSelect)
+    });
+    res.end();
+  } catch (err){ 
+    console.log('Something went wrong!', err);
+    res.write('Something went wrong!' + JSON.stringify(err));
+    res.end();
+  }
+
 
 });
 
