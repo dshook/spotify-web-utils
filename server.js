@@ -64,8 +64,8 @@ app.get('/auth', async function(req, res){
   var state = req.query.state || null;
   var code = req.query.code || null;
 
-  console.log('state', state, 'code', code);
   if(state && code){
+    console.log('state', state, 'code', code);
     res.redirect(state + '?code=' + code);
     return;
   }

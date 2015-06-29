@@ -42,7 +42,6 @@ export default class SpotifyUtils{
       }
     }catch(e){
       console.log('Error adding to playlist', e, songSlice); 
-      console.log('user ' + userId + ' playlist ' + playlistId);
       throw e;
     }
 
