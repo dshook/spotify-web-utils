@@ -41,7 +41,7 @@ async function getSpotifyApi(code, currentPath){
   var spotifyApi = new SpotifyWebApi({
     clientId: clientId,
     clientSecret: clientSecret,
-    redirectUri: getRedirectUrl(currentPath)
+    redirectUri: getRedirectUrl('/auth')
   });
 
   var authData = await spotifyApi.authorizationCodeGrant(code);
@@ -61,6 +61,14 @@ async function getSpotifyApi(code, currentPath){
 app.get('/auth', async function(req, res){
 
   var returnUrl = req.query.returnUrl;
+  var state = req.query.state || null;
+  var code = req.query.code || null;
+
+  console.log('state', state, 'code', code);
+  if(state && code){
+    res.redirect(state + '?code=' + code);
+    return;
+  }
 
   // requests authorization
   var scope = 'user-read-private playlist-read-private playlist-modify-private playlist-modify-public';
@@ -69,8 +77,8 @@ app.get('/auth', async function(req, res){
       response_type: 'code',
       client_id: clientId,
       scope: scope,
-      redirect_uri: getRedirectUrl(returnUrl),
-      state: 'lolol'
+      redirect_uri: getRedirectUrl('/auth'),
+      state: returnUrl
     }));
 });
 
@@ -78,8 +86,8 @@ app.get('/scrape', async function(req, res){
 
   var url = 'http://www.quuit.com/quu/playlist/177';
   var playlistName = 'Old School';
-  var code = req.query.code || null;
   var currentPath = '/scrape';
+  var code = req.query.code || null;
 
   if(!code){
     console.log('Redirecting to Auth'); 
@@ -187,7 +195,7 @@ app.get('/scrape', async function(req, res){
 
 app.get('/coverify', async function(req, res){
 
-  var playlistName = 'play';
+  var playlistName = 'tronic';
   var code = req.query.code || null;
   var currentPath = '/coverify';
 
