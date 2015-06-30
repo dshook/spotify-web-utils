@@ -86,19 +86,18 @@ app.get('/scrape', async function(req, res){
 
   var url = 'http://www.quuit.com/quu/playlist/177';
   var playlistName = 'Old School';
-  var currentPath = '/scrape';
   var code = req.query.code || null;
 
   if(!code){
     console.log('Redirecting to Auth'); 
-    res.redirect('/auth?' + querystring.stringify({returnUrl: currentPath}));
+    res.redirect('/auth?' + querystring.stringify({returnUrl: req.path}));
     return;
   }
 
   console.log('auth');
 
   try{
-    var spotifyApi = await getSpotifyApi(code, currentPath);
+    var spotifyApi = await getSpotifyApi(code, req.path);
     var spotifyUtils = new SpotifyUtils(spotifyApi);
 
     var songs = [];
@@ -197,18 +196,17 @@ app.get('/coverify', async function(req, res){
 
   var playlistName = 'tronic';
   var code = req.query.code || null;
-  var currentPath = '/coverify';
 
   if(!code){
     console.log('Redirecting to Auth'); 
-    res.redirect('/auth?' + querystring.stringify({returnUrl: currentPath}));
+    res.redirect('/auth?' + querystring.stringify({returnUrl: req.path}));
     return;
   }
 
   console.log('auth');
 
   try{
-    var spotifyApi = await getSpotifyApi(code, currentPath);
+    var spotifyApi = await getSpotifyApi(code, req.path);
     var spotifyUtils = new SpotifyUtils(spotifyApi);
 
     var userData = await spotifyApi.getMe();
@@ -293,6 +291,44 @@ app.get('/coverify', async function(req, res){
   }
 
 
+});
+
+app.get('/playlists', async function(req, res){
+  var playlistName = 'tronic';
+  var code = req.query.code || null;
+
+  if(!code){
+    console.log('Redirecting to Auth'); 
+    res.redirect('/auth?' + querystring.stringify({returnUrl: req.path}));
+    return;
+  }
+
+  console.log('auth');
+
+  try{
+    var spotifyApi = await getSpotifyApi(code, req.path);
+    var spotifyUtils = new SpotifyUtils(spotifyApi);
+
+    var userData = await spotifyApi.getMe();
+    var user = userData.body;
+
+    var playlistData = await spotifyApi.getUserPlaylists(user.id);
+    console.log('fetched playlists');
+
+    res.json(
+      playlistData.body.items.map(p => 
+        ({
+          id: p.id,
+          name: p.name,
+          public: p.public
+        })
+      )
+    );
+
+  } catch (err){ 
+    res.write('Something went wrong!' + JSON.stringify(err));
+    res.end();
+  }
 });
 
 app.listen(port);
