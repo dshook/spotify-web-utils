@@ -60,11 +60,10 @@ export default class SpotifyApp{
     var state = req.query.state || null;
     var code = req.query.code || null;
 
-    console.log('client Id', this.clientId, 'state', returnUrl);
-
     if(state && code){
       console.log('state', state, 'code', code);
-      res.redirect(state + '?code=' + code);
+      var delimiter = state.indexOf('?') > -1 ? '&' : '?';
+      res.redirect(state + delimiter + 'code=' + code);
       return;
     }
 
@@ -161,12 +160,12 @@ export default class SpotifyApp{
 
   async coverify(req, res){
 
-    var playlistName = 'tronic';
+    var playlistName = req.query.playlist;
     var code = req.query.code || null;
 
     if(!code){
       console.log('Redirecting to Auth'); 
-      res.redirect('/auth?' + querystring.stringify({returnUrl: req.path}));
+      res.redirect('/auth?' + querystring.stringify({returnUrl: req.path + '?playlist=' + playlistName}));
       return;
     }
 

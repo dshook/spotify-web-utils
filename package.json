@@ -1,7 +1,7 @@
 {
-  "name": "node-web-scrape",
+  "name": "spotify-web-utils",
   "version": "0.1.0",
-  "description": "Scrape le web.",
+  "description": "Utils on top of the spotify web api with reference express app.",
   "scripts": {
     "babel-node": "babel-node --stage 0",
     "start": "nodemon --exec npm run babel-node -- server.js"
