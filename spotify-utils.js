@@ -5,6 +5,29 @@ export default class SpotifyUtils{
     this.spotifyApi = spotifyApi;
   }
 
+  //grab a playlist if it exists, create if not
+  async fetchOrCreatePlaylist(userId, playlistName, playlistOptions){
+      var playlistData = await this.spotifyApi.getUserPlaylists(userId);
+      var playlist = null;
+      playlistOptions = playlistOptions || {public: false};
+
+      if(playlistData.body.items.length > 0){
+        for (var i = playlistData.body.items.length - 1; i >= 0; i--) {
+          var p = playlistData.body.items[i];
+          if(p.name === playlistName){
+            playlist = p;
+            break;
+          }
+        }
+      }else{
+        //create playlist if we couldn't find it
+        var playlistResult = await this.spotifyApi.createPlaylist(userId, playlistName, playlistOptions);
+        playlist = playlistResult.body;
+      }
+
+      return playlist;
+  }
+
   async fetchPlaylistSongs(userId, playlistId){
     var playlistSongs = [];
     var offset = 0;
@@ -46,5 +69,31 @@ export default class SpotifyUtils{
     }
 
     return songsToAdd.length;
+  }
+
+  //Adds new songs to a playlist without duplicating them
+  //pass existingSongIds in if you have already fetched the playlist songs,
+  //otherwise they will be fetched for you
+  async addUniquePlaylistSongs(userId, playlistId, newSongIds, existingSongs){
+    if(!existingSongs){
+      existingSongs = await this.fetchPlaylistSongs(userId, playlistId);
+    }
+
+    var actualNewSongs = [];
+    //find new tracks
+    for(let potentialNewSong of newSongIds){
+      if(!_.any(existingSongs, s => s.track.id === potentialNewSong.id) ){
+        actualNewSongs.push(potentialNewSong);
+      }
+    }
+
+    var trackIds = actualNewSongs
+      .filter(function(m){ return m && m.id; })
+      .map(function(m){
+        return m.id;
+      });
+
+    var playlistAdd = await this.addPlaylistSongs(userId, playlistId, trackIds);
+    return actualNewSongs;
   }
 }
