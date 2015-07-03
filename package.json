@@ -1,10 +1,11 @@
 {
   "name": "spotify-web-utils",
-  "version": "0.1.0",
+  "version": "0.1.2",
   "description": "Utils on top of the spotify web api with reference express app.",
   "scripts": {
     "babel-node": "babel-node --stage 0",
-    "start": "nodemon --exec npm run babel-node -- server.js"
+    "start": "nodemon --exec npm run babel-node -- server.js",
+    "prepublish": "babel lib --out-dir build --stage 0"
   },
   "main": "server.js",
   "author": "Dillon Shook",
@@ -22,5 +23,20 @@
     "babel": "^5.5.8",
     "babel-core": "^5.5.8",
     "nodemon": "^1.3.7"
-  }
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/dshook/spotify-web-utils.git"
+  },
+  "keywords": [
+    "spotify",
+    "utils",
+    "playlist",
+    "songs"
+  ],
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/dshook/spotify-web-utils/issues"
+  },
+  "homepage": "https://github.com/dshook/spotify-web-utils"
 }

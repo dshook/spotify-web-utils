@@ -1,6 +1,6 @@
 var express       = require('express');
 var dotenv        = require('dotenv');
-var SpotifyApp    = require('./spotify-app.js');
+var SpotifyApp    = require('./lib/spotify-app.js');
 var app           = express();
 
 dotenv.load();
