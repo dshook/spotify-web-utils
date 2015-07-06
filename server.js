@@ -5,7 +5,7 @@ var app          = express();
 var cookieParser = require('cookie-parser');
 
 dotenv.load();
-app.use(cookieParser());
+app.use(cookieParser('test'));
 
 var port = process.env.PORT || '8081';
 var clientId = process.env.CLIENT_ID;
