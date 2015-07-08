@@ -1,13 +1,13 @@
 {
   "name": "spotify-web-utils",
-  "version": "0.3.0",
+  "version": "0.3.2",
   "description": "Utils on top of the spotify web api with reference express app.",
   "scripts": {
     "babel-node": "babel-node --stage 0",
     "start": "nodemon --exec npm run babel-node -- server.js",
     "prepublish": "babel lib --out-dir build --stage 0"
   },
-  "main": "server.js",
+  "main": "index.js",
   "author": "Dillon Shook",
   "dependencies": {
     "babel": "^5.5.8",
