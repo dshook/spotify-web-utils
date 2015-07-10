@@ -17,6 +17,7 @@ var spotifyApp = new SpotifyApp(clientId, clientSecret);
 router.get('/auth', spotifyApp.authenticate.bind(spotifyApp));
 router.get('/scrape', spotifyApp.scrape.bind(spotifyApp));
 router.get('/coverify', spotifyApp.coverify.bind(spotifyApp));
+router.get('/supafy', spotifyApp.supafy.bind(spotifyApp));
 router.get('/playlists', spotifyApp.playlists.bind(spotifyApp));
 
 
