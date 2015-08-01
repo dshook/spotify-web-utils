@@ -6,6 +6,7 @@ Scrape internet playlists, find cover songs, or write your own app with these ut
 Utilities included:
 
 * **Fetch or Create Playlist.** Look up a playlist by name, create it if it doesn't exist
+* **Fetch User Playlist.** Look up a playlist by name given a user object
 * **Fetch Playlist songs** Forget about writing your own paging logic and just use this.
 * **Add Songs to Playlist** Again, doing paging manually is annoying.  This lets you fire and forget a big array of songs to add.
 * **Add Unique Songs to Playlist** Add only new songs to a playlist and don't duplicate ones already on the playlist.
